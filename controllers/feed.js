@@ -2,10 +2,17 @@ const fs = require('fs');
 const path = require('path');
 const { validationResult } = require('express-validator/check');
 // --------------Firebase----------------
-const firebaseConfig = require('../config/firebase-config');
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBSE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBSE_APP_ID
+};
 const { initializeApp } = require('firebase/app');
-firebase = initializeApp(firebaseConfig);
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
+firebase = initializeApp(firebaseConfig);
 const defaultStorage = getStorage(firebase);
 // ---------------Models----------------
 const Post = require('../models/post');
@@ -56,37 +63,39 @@ exports.createPost = async (req, res, next) => {
 
   // -----------Upload to Firebase-----------
   const file = req.file;
-  console.log(defaultStorage);
-  const storageRef = ref(defaultStorage, `${file.originalname + '-' + Date.now()}`);
+  const storageRef = ref(defaultStorage, `files/${new Date().toISOString() + "-" + file.originalname}`);
   const metaData = { contentType: file.mimetype };
-  const uploadTask = await uploadBytes(storageRef, file.buffer, metaData);
-  const imageUrl = await getDownloadURL(uploadTask.ref);
-  // const imageUrl = req.file.path.replace('\\', '/');
-  const title = req.body.title;
-  const content = req.body.content;
-  let creator;
-  const post = new Post({
-    title: title,
-    content: content,
-    imageUrl: imageUrl,
-    creator: req.userId
-  });
-  post
-    .save()
-    .then(result => {
-      return User.findById(req.userId);
+  uploadBytes(storageRef, file.buffer, metaData)
+    .then((snapshot) => {
+      return getDownloadURL(snapshot.ref);
     })
-    .then(user => {
-      creator = user;
-      user.posts.push(post);
-      return user.save();
-    })
-    .then(result => {
-      res.status(201).json({
-        message: 'Post created successfully!',
-        post: post,
-        creator: { _id: creator._id, name: creator.name }
+    .then((url) => {
+      const title = req.body.title;
+      const content = req.body.content;
+      let creator;
+      const post = new Post({
+        title: title,
+        content: content,
+        imageUrl: url,
+        creator: req.userId
       });
+      post
+        .save()
+        .then(result => {
+          return User.findById(req.userId);
+        })
+        .then(user => {
+          creator = user;
+          user.posts.push(post);
+          return user.save();
+        })
+        .then(result => {
+          res.status(201).json({
+            message: 'Post created successfully!',
+            post: post,
+            creator: { _id: creator._id, name: creator.name }
+          });
+        })
     })
     .catch(err => {
       if (!err.statusCode) {
@@ -115,55 +124,55 @@ exports.getPost = (req, res, next) => {
     });
 };
 
-exports.updatePost = (req, res, next) => {
-  const postId = req.params.postId;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new Error('Validation failed, entered data is incorrect.');
-    error.statusCode = 422;
-    throw error;
-  }
-  const title = req.body.title;
-  const content = req.body.content;
-  let imageUrl = req.body.image;
-  if (req.file) {
-    imageUrl = req.file.path;
-  }
-  if (!imageUrl) {
-    const error = new Error('No file picked.');
-    error.statusCode = 422;
-    throw error;
-  }
-  Post.findById(postId)
-    .then(post => {
-      if (!post) {
-        const error = new Error('Could not find post.');
-        error.statusCode = 404;
-        throw error;
-      }
-      if (post.creator.toString() !== req.userId) {
-        const error = new Error('Not authorized!');
-        error.statusCode = 403;
-        throw error;
-      }
-      if (imageUrl !== post.imageUrl) {
-        clearImage(post.imageUrl);
-      }
-      post.title = title;
-      post.imageUrl = imageUrl;
-      post.content = content;
-      return post.save();
-    })
-    .then(result => {
-      res.status(200).json({ message: 'Post updated!', post: result });
-    })
-    .catch(err => {
-      if (!err.statusCode) {
-        err.statusCode = 500;
-      }
-      next(err);
-    });
-};
+// exports.updatePost = (req, res, next) => {
+//   const postId = req.params.postId;
+//   const errors = validationResult(req);
+//   if (!errors.isEmpty()) {
+//     const error = new Error('Validation failed, entered data is incorrect.');
+//     error.statusCode = 422;
+//     throw error;
+//   }
+//   const title = req.body.title;
+//   const content = req.body.content;
+//   let imageUrl = req.body.image;
+//   if (req.file) {
+//     imageUrl = req.file.path;
+//   }
+//   if (!imageUrl) {
+//     const error = new Error('No file picked.');
+//     error.statusCode = 422;
+//     throw error;
+//   }
+//   Post.findById(postId)
+//     .then(post => {
+//       if (!post) {
+//         const error = new Error('Could not find post.');
+//         error.statusCode = 404;
+//         throw error;
+//       }
+//       if (post.creator.toString() !== req.userId) {
+//         const error = new Error('Not authorized!');
+//         error.statusCode = 403;
+//         throw error;
+//       }
+//       if (imageUrl !== post.imageUrl) {
+//         clearImage(post.imageUrl);
+//       }
+//       post.title = title;
+//       post.imageUrl = imageUrl;
+//       post.content = content;
+//       return post.save();
+//     })
+//     .then(result => {
+//       res.status(200).json({ message: 'Post updated!', post: result });
+//     })
+//     .catch(err => {
+//       if (!err.statusCode) {
+//         err.statusCode = 500;
+//       }
+//       next(err);
+//     });
+// };
 
 exports.deletePost = (req, res, next) => {
   const postId = req.params.postId;
