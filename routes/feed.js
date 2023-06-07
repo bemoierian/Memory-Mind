@@ -3,8 +3,21 @@ const { body } = require('express-validator/check');
 
 const feedController = require('../controllers/feed');
 const isAuth = require('../middleware/is-auth');
+const multer = require('multer');
 
 const router = express.Router();
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/jpeg'
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+const upload = multer({ storage: multer.memoryStorage(), fileFilter: fileFilter });
 
 // GET /feed/posts
 router.get('/posts', isAuth, feedController.getPosts);
@@ -13,6 +26,7 @@ router.get('/posts', isAuth, feedController.getPosts);
 router.post(
   '/post',
   isAuth,
+  upload.single('file'),
   [
     body('title')
       .trim()

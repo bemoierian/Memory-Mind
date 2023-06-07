@@ -1,45 +1,44 @@
+require('dotenv').config();
 const path = require('path');
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
-require('dotenv').config();
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
 const app = express();
 
-const fileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images');
-  },
-  filename: (req, file, cb) => {
-    cb(null, new Date().toISOString().replace(/:/g, '-') + '-' + file.originalname);
-  }
-});
+// const fileStorage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, 'images');
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, new Date().toISOString() + '-' + file.originalname);
+//   }
+// });
 
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === 'image/png' ||
-    file.mimetype === 'image/jpg' ||
-    file.mimetype === 'image/jpeg'
-  ) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
+// const fileFilter = (req, file, cb) => {
+//   if (
+//     file.mimetype === 'image/png' ||
+//     file.mimetype === 'image/jpg' ||
+//     file.mimetype === 'image/jpeg'
+//   ) {
+//     cb(null, true);
+//   } else {
+//     cb(null, false);
+//   }
+// };
 
 // parse json data
 app.use(bodyParser.json()); // application/json
 // multer for file upload
-app.use(
-  multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
-);
+// app.use(
+//   multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
+// );
 // serve static files
-app.use('/images', express.static(path.join(__dirname, 'images')));
+// app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // CORS support
 app.use((req, res, next) => {

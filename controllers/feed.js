@@ -1,10 +1,17 @@
 const fs = require('fs');
 const path = require('path');
-
 const { validationResult } = require('express-validator/check');
-
+// --------------Firebase----------------
+const firebaseConfig = require('../config/firebase-config');
+const { initializeApp } = require('firebase/app');
+firebase = initializeApp(firebaseConfig);
+const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
+const defaultStorage = getStorage(firebase);
+// ---------------Models----------------
 const Post = require('../models/post');
 const User = require('../models/user');
+
+
 
 exports.getPosts = (req, res, next) => {
   const currentPage = req.query.page || 1;
@@ -33,7 +40,7 @@ exports.getPosts = (req, res, next) => {
     });
 };
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
@@ -46,7 +53,15 @@ exports.createPost = (req, res, next) => {
     error.statusCode = 422;
     throw error;
   }
-  const imageUrl = req.file.path.replace('\\', '/');
+
+  // -----------Upload to Firebase-----------
+  const file = req.file;
+  console.log(defaultStorage);
+  const storageRef = ref(defaultStorage, `${file.originalname + '-' + Date.now()}`);
+  const metaData = { contentType: file.mimetype };
+  const uploadTask = await uploadBytes(storageRef, file.buffer, metaData);
+  const imageUrl = await getDownloadURL(uploadTask.ref);
+  // const imageUrl = req.file.path.replace('\\', '/');
   const title = req.body.title;
   const content = req.body.content;
   let creator;
