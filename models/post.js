@@ -7,7 +7,7 @@ const postSchema = new Schema(
       type: String,
       required: true
     },
-    imageUrl: {
+    fileUrl: {
       type: String,
       required: true
     },
@@ -18,6 +18,10 @@ const postSchema = new Schema(
     creator: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: true
+    },
+    fileType: {
+      type: String,
       required: true
     }
   },

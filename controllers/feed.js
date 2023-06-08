@@ -79,7 +79,8 @@ exports.createPost = (req, res, next) => {
       const post = new Post({
         title: title,
         content: content,
-        imageUrl: url,
+        fileUrl: url,
+        fileType: metaData.contentType,
         creator: req.userId
       });
       // ------------save post to database------------
