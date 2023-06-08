@@ -47,7 +47,7 @@ exports.getPosts = (req, res, next) => {
     });
 };
 
-exports.createPost = async (req, res, next) => {
+exports.createPost = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
@@ -65,11 +65,14 @@ exports.createPost = async (req, res, next) => {
   const file = req.file;
   const storageRef = ref(defaultStorage, `files/${new Date().toISOString() + "-" + file.originalname}`);
   const metaData = { contentType: file.mimetype };
+  // Upload file and metadata
   uploadBytes(storageRef, file.buffer, metaData)
     .then((snapshot) => {
+      // Get the download URL
       return getDownloadURL(snapshot.ref);
     })
     .then((url) => {
+      // save to database
       const title = req.body.title;
       const content = req.body.content;
       let creator;
@@ -79,12 +82,15 @@ exports.createPost = async (req, res, next) => {
         imageUrl: url,
         creator: req.userId
       });
+      // ------------save post to database------------
       post
         .save()
         .then(result => {
+          // find the user that created the post
           return User.findById(req.userId);
         })
         .then(user => {
+          // add post to user's posts array
           creator = user;
           user.posts.push(post);
           return user.save();
