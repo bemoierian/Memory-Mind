@@ -21,8 +21,8 @@ const User = require('../models/user');
 
 
 exports.getPosts = (req, res, next) => {
-  const currentPage = req.query.page || 1;
-  const perPage = 2;
+  const currentPage = parseInt(req.query.page) || 1;
+  const perPage = parseInt(req.query.items) || 5;
   let totalItems;
   Post.find()
     .countDocuments()
