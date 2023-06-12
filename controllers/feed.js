@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId: process.env.FIREBSE_APP_ID
 };
 const { initializeApp } = require('firebase/app');
-const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');
+const { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } = require('firebase/storage');
 firebase = initializeApp(firebaseConfig);
 const defaultStorage = getStorage(firebase);
 // ---------------Models----------------
@@ -30,6 +30,7 @@ exports.getPosts = (req, res, next) => {
     .then(count => {
       totalItems = count;
       return Post.find({ creator: userId })
+        .select('-refPath')
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
     })
@@ -64,7 +65,8 @@ exports.createPost = (req, res, next) => {
 
   // -----------Upload to Firebase-----------
   const file = req.file;
-  const storageRef = ref(defaultStorage, `files/${new Date().toISOString() + "-" + file.originalname}`);
+  const refPath = `files/${new Date().toISOString() + "-" + file.originalname}`;
+  const storageRef = ref(defaultStorage, refPath);
   const metaData = { contentType: file.mimetype };
   // Upload file and metadata
   uploadBytes(storageRef, file.buffer, metaData)
@@ -81,9 +83,12 @@ exports.createPost = (req, res, next) => {
         title: title,
         content: content,
         fileUrl: url,
+        refPath: refPath,
         fileType: metaData.contentType,
         creator: req.userId
       });
+      // exclude refPath from post object
+      const { refPath: _, ...resPost } = post._doc;
       // ------------save post to database------------
       post
         .save()
@@ -100,7 +105,7 @@ exports.createPost = (req, res, next) => {
         .then(result => {
           res.status(201).json({
             message: 'Post created successfully!',
-            post: post,
+            post: resPost,
             creator: { _id: creator._id, name: creator.name }
           });
         })
@@ -164,7 +169,7 @@ exports.getPost = (req, res, next) => {
 //         throw error;
 //       }
 //       if (imageUrl !== post.imageUrl) {
-//         clearImage(post.imageUrl);
+//         deleteImageFromLocalStorage(post.imageUrl);
 //       }
 //       post.title = title;
 //       post.imageUrl = imageUrl;
@@ -191,19 +196,24 @@ exports.deletePost = (req, res, next) => {
         error.statusCode = 404;
         throw error;
       }
+      // Check logged in user
       if (post.creator.toString() !== req.userId) {
         const error = new Error('Not authorized!');
         error.statusCode = 403;
         throw error;
       }
-      // Check logged in user
-      clearImage(post.imageUrl);
+      // deleteImageFromLocalStorage(post.imageUrl);
+      return deleteImageFromFirebaseStorage(post.refPath);
+    })
+    .then(result => {
+      // Delete post from posts collection
       return Post.findByIdAndRemove(postId);
     })
     .then(result => {
       return User.findById(req.userId);
     })
     .then(user => {
+      // Delete post from user's posts array
       user.posts.pull(postId);
       return user.save();
     })
@@ -218,7 +228,12 @@ exports.deletePost = (req, res, next) => {
     });
 };
 
-const clearImage = filePath => {
+const deleteImageFromLocalStorage = (filePath) => {
   filePath = path.join(__dirname, '..', filePath);
   fs.unlink(filePath, err => console.log(err));
+};
+
+const deleteImageFromFirebaseStorage = (refPath) => {
+  const storageRef = ref(defaultStorage, refPath);
+  return deleteObject(storageRef);
 };
