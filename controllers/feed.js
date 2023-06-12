@@ -24,11 +24,12 @@ exports.getPosts = (req, res, next) => {
   const currentPage = parseInt(req.query.page) || 1;
   const perPage = parseInt(req.query.items) || 5;
   let totalItems;
-  Post.find()
+  let userId = req.userId;
+  Post.find({ creator: userId })
     .countDocuments()
     .then(count => {
       totalItems = count;
-      return Post.find()
+      return Post.find({ creator: userId })
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
     })
