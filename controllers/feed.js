@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require('express-validator');
 // --------------Firebase----------------
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
