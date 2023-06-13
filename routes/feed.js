@@ -21,11 +21,11 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: multer.memoryStorage(), fileFilter: fileFilter });
 
 // GET /feed/posts
-router.get('/posts', isAuth, feedController.getPosts);
+router.get('/user-media', isAuth, feedController.getUserMedia);
 
 // POST /feed/post
 router.post(
-  '/post',
+  '/upload-media',
   isAuth,
   upload.single('file'),
   [
@@ -36,13 +36,13 @@ router.post(
       .trim()
       .isLength({ min: 5 })
   ],
-  feedController.createPost
+  feedController.uploadMedia
 );
 
-router.get('/post/:postId', isAuth, feedController.getPost);
+router.get('/media/:mediaId', isAuth, feedController.getMedia);
 
 router.patch(
-  '/post/:postId',
+  '/media/:mediaId',
   isAuth,
   [
     body('title')
@@ -54,9 +54,9 @@ router.patch(
       .trim()
       .isLength({ min: 5 })
   ],
-  feedController.updatePost
+  feedController.updateMedia
 );
 
-router.delete('/post/:postId', isAuth, feedController.deletePost);
+router.delete('/media/:mediaId', isAuth, feedController.deleteMedia);
 
 module.exports = router;

@@ -14,10 +14,10 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
-  posts: [
+  media: [
     {
       type: Schema.Types.ObjectId,
-      ref: 'Post'
+      ref: 'Media'
     }
   ]
 });

@@ -15,29 +15,29 @@ const { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } = require('
 firebase = initializeApp(firebaseConfig);
 const defaultStorage = getStorage(firebase);
 // ---------------Models----------------
-const Post = require('../models/post');
+const Media = require('../models/media');
 const User = require('../models/user');
 
 
 
-exports.getPosts = (req, res, next) => {
+exports.getUserMedia = (req, res, next) => {
   const currentPage = parseInt(req.query.page) || 1;
   const perPage = parseInt(req.query.items) || 5;
   let totalItems;
   let userId = req.userId;
-  Post.find({ creator: userId })
+  Media.find({ creator: userId })
     .countDocuments()
     .then(count => {
       totalItems = count;
-      return Post.find({ creator: userId })
+      return Media.find({ creator: userId })
         .select('-refPath')
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
     })
-    .then(posts => {
+    .then(media => {
       res.status(200).json({
-        message: 'Fetched posts successfully.',
-        posts: posts,
+        message: 'Fetched media successfully.',
+        media: media,
         totalItems: totalItems
       });
     })
@@ -49,7 +49,7 @@ exports.getPosts = (req, res, next) => {
     });
 };
 
-exports.createPost = (req, res, next) => {
+exports.uploadMedia = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
@@ -79,7 +79,7 @@ exports.createPost = (req, res, next) => {
       const title = req.body.title;
       const content = req.body.content;
       let creator;
-      const post = new Post({
+      const media = new Media({
         title: title,
         content: content,
         fileUrl: url,
@@ -87,27 +87,27 @@ exports.createPost = (req, res, next) => {
         fileType: metaData.contentType,
         creator: req.userId
       });
-      // exclude refPath from post object
-      // restPost is the post object without refPath,
+      // exclude refPath from media object
+      // restmedia is the media object without refPath,
       // which is not needed in the response
-      const { refPath: _, ...resPost } = post._doc;
-      // ------------save post to database------------
-      post
+      const { refPath: _, ...resMedia } = media._doc;
+      // ------------save media to database------------
+      media
         .save()
         .then(result => {
-          // find the user that created the post
+          // find the user that created the media
           return User.findById(req.userId);
         })
         .then(user => {
-          // add post to user's posts array
+          // add media to user's medias array
           creator = user;
-          user.posts.push(post);
+          user.media.push(media);
           return user.save();
         })
         .then(result => {
           res.status(201).json({
-            message: 'Post created successfully!',
-            post: resPost,
+            message: 'Media created successfully!',
+            media: resMedia,
             creator: { _id: creator._id, name: creator.name }
           });
         })
@@ -120,16 +120,16 @@ exports.createPost = (req, res, next) => {
     });
 };
 
-exports.getPost = (req, res, next) => {
-  const postId = req.params.postId;
-  Post.findById(postId)
-    .then(post => {
-      if (!post) {
-        const error = new Error('Could not find post.');
+exports.getMedia = (req, res, next) => {
+  const mediaId = req.params.mediaId;
+  Media.findById(mediaId)
+    .then(media => {
+      if (!media) {
+        const error = new Error('Could not find the file.');
         error.statusCode = 404;
         throw error;
       }
-      res.status(200).json({ message: 'Post fetched.', post: post });
+      res.status(200).json({ message: 'Media fetched.', media: media });
     })
     .catch(err => {
       if (!err.statusCode) {
@@ -139,8 +139,8 @@ exports.getPost = (req, res, next) => {
     });
 };
 
-exports.updatePost = (req, res, next) => {
-  const postId = req.params.postId;
+exports.updateMedia = (req, res, next) => {
+  const mediaId = req.params.mediaId;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed, entered data is incorrect.');
@@ -150,30 +150,30 @@ exports.updatePost = (req, res, next) => {
   const title = req.body.title;
   const content = req.body.content;
 
-  Post.findById(postId)
-    .then(post => {
-      if (!post) {
-        const error = new Error('Could not find post.');
+  Media.findById(mediaId)
+    .then(media => {
+      if (!media) {
+        const error = new Error('Could not find file.');
         error.statusCode = 404;
         throw error;
       }
-      if (post.creator.toString() !== req.userId) {
+      if (media.creator.toString() !== req.userId) {
         const error = new Error('Not authorized!');
         error.statusCode = 403;
         throw error;
       }
       // update fields that are sent in the request
       if (title) {
-        post.title = title;
+        media.title = title;
       }
       if (content) {
-        post.content = content;
+        media.content = content;
       }
 
-      return post.save();
+      return media.save();
     })
     .then(result => {
-      res.status(200).json({ message: 'Post updated!', post: result });
+      res.status(200).json({ message: 'Media updated!', media: result });
     })
     .catch(err => {
       if (!err.statusCode) {
@@ -183,38 +183,38 @@ exports.updatePost = (req, res, next) => {
     });
 };
 
-exports.deletePost = (req, res, next) => {
-  const postId = req.params.postId;
-  Post.findById(postId)
-    .then(post => {
-      if (!post) {
-        const error = new Error('Could not find post.');
+exports.deleteMedia = (req, res, next) => {
+  const mediaId = req.params.mediaId;
+  Media.findById(mediaId)
+    .then(media => {
+      if (!media) {
+        const error = new Error('Could not find file.');
         error.statusCode = 404;
         throw error;
       }
       // Check logged in user
-      if (post.creator.toString() !== req.userId) {
+      if (media.creator.toString() !== req.userId) {
         const error = new Error('Not authorized!');
         error.statusCode = 403;
         throw error;
       }
-      // deleteImageFromLocalStorage(post.imageUrl);
-      return deleteImageFromFirebaseStorage(post.refPath);
+      // deleteImageFromLocalStorage(media.imageUrl);
+      return deleteImageFromFirebaseStorage(media.refPath);
     })
     .then(result => {
-      // Delete post from posts collection
-      return Post.findByIdAndRemove(postId);
+      // Delete media from media collection
+      return Media.findByIdAndRemove(mediaId);
     })
     .then(result => {
       return User.findById(req.userId);
     })
     .then(user => {
-      // Delete post from user's posts array
-      user.posts.pull(postId);
+      // Delete file from user's media array
+      user.media.pull(mediaId);
       return user.save();
     })
     .then(result => {
-      res.status(200).json({ message: 'Deleted post.' });
+      res.status(200).json({ message: 'Deleted file.' });
     })
     .catch(err => {
       if (!err.statusCode) {
