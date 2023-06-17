@@ -27,6 +27,10 @@ const postSchema = new Schema(
     fileType: {
       type: String,
       required: true
+    },
+    reminderDate: {
+      type: Date,
+      // required: true
     }
   },
   { timestamps: true }

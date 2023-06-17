@@ -78,6 +78,7 @@ exports.uploadMedia = (req, res, next) => {
       // save to database
       const title = req.body.title;
       const content = req.body.content;
+      const reminderDate = req.body.reminderDate;
       let creator;
       const media = new Media({
         title: title,
@@ -85,7 +86,8 @@ exports.uploadMedia = (req, res, next) => {
         fileUrl: url,
         refPath: refPath,
         fileType: metaData.contentType,
-        creator: req.userId
+        creator: req.userId,
+        reminderDate: new Date(reminderDate)
       });
       // exclude refPath from media object
       // restmedia is the media object without refPath,
@@ -149,6 +151,7 @@ exports.updateMedia = (req, res, next) => {
   }
   const title = req.body.title;
   const content = req.body.content;
+  const reminderDate = req.body.reminderDate;
 
   Media.findById(mediaId)
     .then(media => {
@@ -169,6 +172,11 @@ exports.updateMedia = (req, res, next) => {
       if (content) {
         media.content = content;
       }
+      if (reminderDate) {
+        media.reminderDate = new Date(reminderDate);
+        console.log(media.reminderDate);
+      }
+      console.log(reminderDate);
 
       return media.save();
     })

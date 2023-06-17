@@ -28,14 +28,18 @@ router.post(
   '/upload-media',
   isAuth,
   upload.single('file'),
-  // [
-  //   body('title')
-  //     .trim()
-  //     .isLength({ min: 5 }),
-  //   body('content')
-  //     .trim()
-  //     .isLength({ min: 5 })
-  // ],
+  [
+    body('reminderDate')
+      .trim()
+      .isISO8601()
+    //  .withMessage('Must be a valid date')  
+    //   body('title')
+    //     .trim()
+    //     .isLength({ min: 5 }),
+    //   body('content')
+    //     .trim()
+    //     .isLength({ min: 5 })
+  ],
   feedController.uploadMedia
 );
 
