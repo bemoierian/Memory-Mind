@@ -107,7 +107,7 @@ exports.uploadMedia = (req, res, next) => {
         .then(result => {
           res.status(201).json({
             message: 'Media created successfully!',
-            media: resMedia,
+            media: [resMedia],
             creator: { _id: creator._id, name: creator.name }
           });
         })
