@@ -30,6 +30,7 @@ router.post(
   upload.single('file'),
   [
     body('reminderDate')
+      .optional()
       .trim()
       .isISO8601()
     //  .withMessage('Must be a valid date')  

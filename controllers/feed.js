@@ -80,15 +80,17 @@ exports.uploadMedia = (req, res, next) => {
       const content = req.body.content;
       const reminderDate = req.body.reminderDate;
       let creator;
-      const media = new Media({
+      let media = new Media({
         title: title,
         content: content,
         fileUrl: url,
         refPath: refPath,
         fileType: metaData.contentType,
         creator: req.userId,
-        reminderDate: new Date(reminderDate)
       });
+      if (reminderDate) {
+        media.reminderDate = new Date(reminderDate);
+      }
       // exclude refPath from media object
       // restmedia is the media object without refPath,
       // which is not needed in the response
