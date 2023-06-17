@@ -5,7 +5,7 @@ const postSchema = new Schema(
   {
     title: {
       type: String,
-      required: true
+      // required: true
     },
     fileUrl: {
       type: String,
@@ -17,7 +17,7 @@ const postSchema = new Schema(
     },
     content: {
       type: String,
-      required: true
+      // required: true
     },
     creator: {
       type: Schema.Types.ObjectId,
