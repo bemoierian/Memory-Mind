@@ -25,8 +25,16 @@ exports.getUserMedia = (req, res, next) => {
   const perPage = parseInt(req.query.items) || 5;
   let totalItems;
   let userId = req.userId;
-  Media.find({ creator: userId })
-    .countDocuments()
+  let usedStorage;
+  User.findById(userId).then(user => {
+    if (!user) {
+      const error = new Error('User not found.');
+      error.statusCode = 404;
+      throw error;
+    }
+    usedStorage = user.usedStorage;
+    return Media.find({ creator: userId }).countDocuments();
+  })
     .then(count => {
       totalItems = count;
       return Media.find({ creator: userId })
@@ -39,6 +47,7 @@ exports.getUserMedia = (req, res, next) => {
       res.status(200).json({
         message: 'Fetched media successfully.',
         media: media,
+        usedStorage: usedStorage,
         totalItems: totalItems
       });
     })
@@ -63,16 +72,28 @@ exports.uploadMedia = (req, res, next) => {
     error.statusCode = 422;
     throw error;
   }
-
-  // -----------Upload to Firebase-----------
   const file = req.file;
   // Get file size in MB
   const fileSize = file.size / (1024 * 1024);
+  // -----------Firebase Variables-----------
   const refPath = `files/${new Date().toISOString() + "-" + file.originalname}`;
   const storageRef = ref(defaultStorage, refPath);
   const metaData = { contentType: file.mimetype };
-  // Upload file and metadata
-  uploadBytes(storageRef, file.buffer, metaData)
+  // -----------------------------------------
+  let creator;
+  User
+    .findById(req.userId)
+    .then(user => {
+      creator = user;
+      // Check if user has enough storage space
+      if (user.usedStorage + fileSize > user.storageLimit) {
+        const error = new Error('Not enough storage space.');
+        error.statusCode = 422;
+        throw error;
+      }
+      // Upload file and metadata
+      return uploadBytes(storageRef, file.buffer, metaData);
+    })
     .then((snapshot) => {
       // Get the download URL
       return getDownloadURL(snapshot.ref);
@@ -82,7 +103,6 @@ exports.uploadMedia = (req, res, next) => {
       const title = req.body.title;
       const content = req.body.content;
       const reminderDate = req.body.reminderDate;
-      let creator;
       let media = new Media({
         title: title,
         content: content,
@@ -106,20 +126,17 @@ exports.uploadMedia = (req, res, next) => {
           // find the user that created the media
           resMedia.createdAt = result.createdAt;
           resMedia.updatedAt = result.updatedAt;
-          return User.findById(req.userId);
-        })
-        .then(user => {
           // add media to user's medias array
-          creator = user;
-          user.media.push(media);
-          user.usedStorage += fileSize;
-          return user.save();
+          creator.media.push(media);
+          creator.usedStorage += fileSize;
+          return creator.save();
         })
         .then(result => {
           res.status(201).json({
             message: 'Media created successfully!',
             media: [resMedia],
-            creator: { _id: creator._id, name: creator.name }
+            creator: { _id: creator._id, name: creator.name },
+            usedStorage: result.usedStorage
           });
         })
     })
@@ -234,7 +251,7 @@ exports.deleteMedia = (req, res, next) => {
       return user.save();
     })
     .then(result => {
-      res.status(200).json({ message: 'Deleted file.' });
+      res.status(200).json({ message: 'Deleted file.', usedStorage: result.usedStorage });
     })
     .catch(err => {
       if (!err.statusCode) {

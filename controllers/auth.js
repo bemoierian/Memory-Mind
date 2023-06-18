@@ -64,7 +64,7 @@ exports.login = (req, res, next) => {
         JWT_SECRET,
         // { expiresIn: '1h' }
       );
-      res.status(200).json({ token: token, userId: loadedUser._id.toString(), usedStorage: loadedUser.usedStorage, name: loadedUser.name });
+      res.status(200).json({ token: token, userId: loadedUser._id.toString(), usedStorage: loadedUser.usedStorage, storageLimit: loadedUser.storageLimit, name: loadedUser.name });
     })
     .catch(err => {
       if (!err.statusCode) {

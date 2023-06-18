@@ -18,6 +18,10 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
+  storageLimit: {
+    type: Number,
+    default: 25.0
+  },
   media: [
     {
       type: Schema.Types.ObjectId,
