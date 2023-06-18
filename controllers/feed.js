@@ -104,6 +104,8 @@ exports.uploadMedia = (req, res, next) => {
         .save()
         .then(result => {
           // find the user that created the media
+          resMedia.createdAt = result.createdAt;
+          resMedia.updatedAt = result.updatedAt;
           return User.findById(req.userId);
         })
         .then(user => {
