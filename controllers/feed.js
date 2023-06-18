@@ -110,6 +110,7 @@ exports.uploadMedia = (req, res, next) => {
           // add media to user's medias array
           creator = user;
           user.media.push(media);
+          user.usedStorage += fileSize;
           return user.save();
         })
         .then(result => {
@@ -199,6 +200,7 @@ exports.updateMedia = (req, res, next) => {
 
 exports.deleteMedia = (req, res, next) => {
   const mediaId = req.params.mediaId;
+  let fileSize;
   Media.findById(mediaId)
     .then(media => {
       if (!media) {
@@ -212,6 +214,7 @@ exports.deleteMedia = (req, res, next) => {
         error.statusCode = 403;
         throw error;
       }
+      fileSize = media.fileSize;
       // deleteImageFromLocalStorage(media.imageUrl);
       return deleteImageFromFirebaseStorage(media.refPath);
     })
@@ -225,6 +228,7 @@ exports.deleteMedia = (req, res, next) => {
     .then(user => {
       // Delete file from user's media array
       user.media.pull(mediaId);
+      user.usedStorage -= fileSize;
       return user.save();
     })
     .then(result => {
