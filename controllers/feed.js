@@ -100,7 +100,8 @@ exports.uploadMedia = (req, res, next) => {
     })
     .then((url) => {
       // save to database
-      const title = req.body.title;
+      // const title = req.body.title;
+      const title = file.originalname;
       const content = req.body.content;
       const reminderDate = req.body.reminderDate;
       let media = new Media({
