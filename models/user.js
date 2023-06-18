@@ -14,6 +14,10 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
+  usedStorage: {
+    type: Number,
+    default: 0
+  },
   media: [
     {
       type: Schema.Types.ObjectId,
