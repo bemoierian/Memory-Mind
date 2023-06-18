@@ -30,6 +30,7 @@ exports.getUserMedia = (req, res, next) => {
     .then(count => {
       totalItems = count;
       return Media.find({ creator: userId })
+        .sort({ createdAt: -1 })
         .select('-refPath')
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
@@ -65,6 +66,8 @@ exports.uploadMedia = (req, res, next) => {
 
   // -----------Upload to Firebase-----------
   const file = req.file;
+  // Get file size in MB
+  const fileSize = file.size / (1024 * 1024);
   const refPath = `files/${new Date().toISOString() + "-" + file.originalname}`;
   const storageRef = ref(defaultStorage, refPath);
   const metaData = { contentType: file.mimetype };
@@ -87,6 +90,7 @@ exports.uploadMedia = (req, res, next) => {
         refPath: refPath,
         fileType: metaData.contentType,
         creator: req.userId,
+        fileSize: fileSize
       });
       if (reminderDate) {
         media.reminderDate = new Date(reminderDate);

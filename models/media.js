@@ -28,6 +28,10 @@ const postSchema = new Schema(
       type: String,
       required: true
     },
+    fileSize: {
+      type: Number,
+      required: true
+    },
     reminderDate: {
       type: Date,
       // required: true
