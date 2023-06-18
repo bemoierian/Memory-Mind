@@ -9,6 +9,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 const app = express();
 
 // parse json data
@@ -29,6 +30,7 @@ app.use(cors());
 // routes
 app.use('/feed', feedRoutes);
 app.use('/auth', authRoutes);
+app.use('/user', userRoutes);
 
 // error handling middleware
 app.use((error, req, res, next) => {
