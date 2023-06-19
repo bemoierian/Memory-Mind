@@ -22,6 +22,12 @@ const userSchema = new Schema({
     type: Number,
     default: 25.0
   },
+  profilePictureURL: {
+    type: String,
+  },
+  profilePictureRef: {
+    type: String,
+  },
   media: [
     {
       type: Schema.Types.ObjectId,
