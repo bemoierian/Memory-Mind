@@ -23,3 +23,36 @@ exports.getUser = (req, res, next) => {
             next(err);
         });
 };
+exports.updateProfilePicture = (req, res, next) => {
+    const userId = req.userId;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = new Error('Validation failed, entered data is incorrect.');
+        error.statusCode = 422;
+        throw error;
+    }
+    let oldProfilePicture;
+    User.findById(userId)
+        .then(user => {
+            if (!user) {
+                const error = new Error('Could not find user.');
+                error.statusCode = 404;
+                throw error;
+            }
+            oldProfilePicture = user.profilePicture;
+            user.profilePicture = req.file.path;
+            return user.save();
+        })
+        .then(result => {
+            if (oldProfilePicture !== 'images/default-profile-picture.png') {
+                clearImage(oldProfilePicture);
+            }
+            res.status(200).json({ message: 'Profile picture updated.', profilePicture: result.profilePicture });
+        })
+        .catch(err => {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+}

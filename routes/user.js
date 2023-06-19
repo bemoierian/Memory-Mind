@@ -7,4 +7,5 @@ const isAuth = require('../middleware/is-auth');
 
 const router = express.Router();
 router.get('/get-user', isAuth, userController.getUser);
+router.post('/update-profile-picture', isAuth, userController.updateProfilePicture);
 module.exports = router;
