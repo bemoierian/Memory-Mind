@@ -5,6 +5,9 @@ const { validationResult } = require('express-validator');
 const { firebase } = require('../config/firebase-config');
 const { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } = require('firebase/storage');
 const defaultStorage = getStorage(firebase);
+// ----------------Mail-----------------
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 // ---------------Models----------------
 const Media = require('../models/media');
 const User = require('../models/user');
@@ -72,6 +75,7 @@ exports.uploadMedia = (req, res, next) => {
   const metaData = { contentType: file.mimetype };
   // -----------------------------------------
   let creator;
+  let savedMedia;
   User
     .findById(req.userId)
     .then(user => {
@@ -115,6 +119,7 @@ exports.uploadMedia = (req, res, next) => {
       media
         .save()
         .then(result => {
+          savedMedia = result;
           // find the user that created the media
           resMedia.createdAt = result.createdAt;
           resMedia.updatedAt = result.updatedAt;
@@ -124,6 +129,24 @@ exports.uploadMedia = (req, res, next) => {
           return creator.save();
         })
         .then(result => {
+          if (savedMedia.reminderDate !== undefined) {
+            // send email reminder
+            console.log('Sending email reminder...');
+            sgMail.send({
+              to: creator.email, // Change to your recipient
+              from: 'bemoierian@outlook.com', // Change to your verified sender
+              subject: 'Memory Mind - Reminder!',
+              html: `<h1>This is a reminder about your uploaded media!</h1>
+                    <p>Title: ${savedMedia.title}</p>
+                    <p>Content: ${savedMedia.content}</p>
+                    <p>Reminder Date: ${savedMedia.reminderDate}</p>
+                    <p>File Type: ${savedMedia.fileType}</p>
+                    <p>File Size: ${savedMedia.fileSize} MB</p>
+                    <p>File URL: ${savedMedia.fileUrl}</p>`,
+              sendAt: parseInt((savedMedia.reminderDate.getTime() / 1000).toFixed(0)),
+            });
+          }
+
           res.status(201).json({
             message: 'Media created successfully!',
             media: [resMedia],
@@ -131,6 +154,12 @@ exports.uploadMedia = (req, res, next) => {
             usedStorage: result.usedStorage
           });
         })
+        .catch(err => {
+          if (!err.statusCode) {
+            err.statusCode = 500;
+          }
+          next(err);
+        });
     })
     .catch(err => {
       if (!err.statusCode) {
