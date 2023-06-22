@@ -27,7 +27,7 @@ app.use(cors());
 //   next();
 // });
 
-// swagger options
+// ------------------Swagger------------------
 const options = {
   definition: {
     openapi: "3.0.0",
@@ -42,12 +42,12 @@ const options = {
 const specs = swaggerJsDoc(options);
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
-// routes
+// ------------------Routes-------------------
 app.use('/feed', feedRoutes);
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 
-// error handling middleware
+// ------------------Error Handling-------------------
 app.use((error, req, res, next) => {
   console.log(error);
   const status = error.statusCode || 500;
