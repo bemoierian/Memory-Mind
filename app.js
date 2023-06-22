@@ -1,10 +1,10 @@
 require('dotenv').config();
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const multer = require('multer');
+const swaggerJsDoc = require("swagger-jsdoc");
+const swaggerUI = require("swagger-ui-express");
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const feedRoutes = require('./routes/feed');
@@ -26,6 +26,21 @@ app.use(cors());
 //   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 //   next();
 // });
+
+// swagger options
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Memory Mind API",
+      version: "1.0.0",
+      description: "API-Documentation",
+    },
+  },
+  apis: ["./routes/*.js"],
+};
+const specs = swaggerJsDoc(options);
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
 // routes
 app.use('/feed', feedRoutes);

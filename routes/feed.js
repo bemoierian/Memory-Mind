@@ -20,7 +20,81 @@ const fileFilter = (req, file, cb) => {
 };
 const upload = multer({ storage: multer.memoryStorage(), fileFilter: fileFilter });
 
-// GET /feed/posts
+
+/**
+ * @swagger
+ * /feed/user-media:
+ *  get:
+ *    description: Used to get all media of a user with pagination
+ *    parameters:
+ *       - in: path
+ *         name: page
+ *         required: false
+ *         description: Page number.
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: items
+ *         required: false
+ *         description: Number of items per page.
+ *         schema:
+ *           type: integer
+ *    responses:
+ *      "200":
+ *        description: A successful response
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  description: Message.
+ *                  example: Fetched media successfully.
+ *                usedStorage:
+ *                  type: number
+ *                  description: Used storage space in MB.
+ *                  example: 1.5
+ *                totalItems:
+ *                  type: number
+ *                  description: Total number of media.
+ *                  example: 10
+ *                media:
+ *                  type: array
+ *                  items:
+ *                    type: object
+ *                    properties:
+ *                      title:
+ *                        type: string
+ *                        description: Media file name.
+ *                        example: photo.jpg
+ *                      content:
+ *                        type: string
+ *                        description: Media content.
+ *                        example: This is a photo of my cat.
+ *                      reminderDate:
+ *                        type: string
+ *                        description: Media reminder date.
+ *                        example: 2020-01-01T00:00:00.000Z
+ *                      fileUrl:
+ *                        type: string
+ *                        description: Media file URL.
+ *                      fileSize:
+ *                        type: number
+ *                        description: Media file size in MB.
+ *                        example: 1.5
+ *                      fileType:
+ *                        type: string
+ *                        description: Media file type.
+ *                        example: image/jpeg
+ *                      creator:                
+ *                        type: object
+ *                        properties:
+ *                          _id:
+ *                            type: string
+ *                            description: User ID.
+ *   
+*/
 router.get('/user-media', isAuth, feedController.getUserMedia);
 
 // POST /feed/post
