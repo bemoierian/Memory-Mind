@@ -33,7 +33,19 @@ const userSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'Media'
     }
-  ]
+  ],
+  signUpCode: {
+    type: String,
+    required: true
+  },
+  signUpCodeExpiration: {
+    type: Date,
+    required: true
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
 });
 
 module.exports = mongoose.model('User', userSchema);

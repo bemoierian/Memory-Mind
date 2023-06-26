@@ -6,8 +6,7 @@ const { firebase } = require('../config/firebase-config');
 const { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } = require('firebase/storage');
 const defaultStorage = getStorage(firebase);
 // ----------------Mail-----------------
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const { sgMail } = require('../config/sendgrid-config');
 // ---------------Models----------------
 const Media = require('../models/media');
 const User = require('../models/user');

@@ -34,6 +34,10 @@ router.put(
 
 router.post('/login', authController.login);
 
+router.post('/verify-email', authController.verifyEmail);
+
+router.post('/resend-signup-code', authController.resendSignUpCode);
+
 
 
 module.exports = router;
