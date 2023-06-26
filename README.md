@@ -26,3 +26,7 @@ Memory Mind keeps your memories in format of images and videos organized in one 
 - [x] Upload memory (image/video, date, description)
 - [x] Delete memory
 - [x] Update memory
+
+## Frontend repo
+
+[Memory Mind Frontend](https://github.com/bemoierian/Memory-Mind-App)
